@@ -1,9 +1,3 @@
-using System.Reflection.Metadata;
-using Microsoft.AspNetCore.StaticFiles;
-using Ocelot.DependencyInjection;
-using Ocelot.Middleware;
-using pandora.admin.webapi.Middlewares;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -64,10 +58,7 @@ app.UseWhen(context =>
     }
 
     return redirectToOcelot;
-}, action =>
-{
-    app.MapReverseProxy();
-});
+}, action => { app.MapReverseProxy(); });
 
 app.MapControllers();
 

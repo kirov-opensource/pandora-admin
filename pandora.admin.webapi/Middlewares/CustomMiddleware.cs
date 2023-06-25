@@ -1,20 +1,16 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using Ocelot.Logging;
 
 namespace pandora.admin.webapi.Middlewares;
 
 using System.Threading.Tasks;
-using Ocelot.Middleware;
-using Ocelot.Multiplexer;
-using Ocelot.Responses;
 
-public class CustomOcelotMiddleware
+public class CustomMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly ILogger<CustomOcelotMiddleware> _logger;
+    private readonly ILogger<CustomMiddleware> _logger;
 
-    public CustomOcelotMiddleware(RequestDelegate next, ILogger<CustomOcelotMiddleware> logger)
+    public CustomMiddleware(RequestDelegate next, ILogger<CustomMiddleware> logger)
     {
         _next = next;
         _logger = logger;
