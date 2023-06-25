@@ -1,4 +1,5 @@
 using System.Reflection.Metadata;
+using Microsoft.AspNetCore.StaticFiles;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using pandora.admin.webapi.Middlewares;
@@ -10,13 +11,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOcelot();
+
+// builder.Services.AddOcelot();
+
+builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-//使用静态文件
-app.UseStaticFiles();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -25,13 +28,23 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+// app.UseHttpsRedirection();
+//
+// app.UseAuthorization();
+
 Dictionary<string, HashSet<string>> overridePaths = new Dictionary<string, HashSet<string>>()
 {
     { "/auth/login", new HashSet<string>() { "POST" } },
     { "/log_conversation", new HashSet<string>() { "POST" } }
 };
 
-app.MapWhen(context =>
+
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseWhen(context =>
 {
     var redirectToOcelot = true;
     foreach (var pathInfo in overridePaths)
@@ -53,15 +66,8 @@ app.MapWhen(context =>
     return redirectToOcelot;
 }, action =>
 {
-    //.UseMiddleware<CustomOcelotMiddleware>()
-    action
-        .UseOcelot()
-        .Wait();
+    app.MapReverseProxy();
 });
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
 
 app.MapControllers();
 

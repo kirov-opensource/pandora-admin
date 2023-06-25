@@ -28,6 +28,6 @@ public class OverrideController : ControllerBase
     [HttpPost("/log_conversation")]
     public async Task<IActionResult> LogConversation([FromBody] string[] conversationIds)
     {
-        return Ok();
+        return NoContent();
     }
 }
