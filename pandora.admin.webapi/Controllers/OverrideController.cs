@@ -17,7 +17,7 @@ public class OverrideController : ControllerBase
         _dbContext = dbContext;
         var c = dbContext.Users.ToList();
         
-？？    }
+    }
 
     [HttpPost("/auth/login")]
     public async Task<IActionResult> Login([FromForm] LoginRequestModel loginModel)
