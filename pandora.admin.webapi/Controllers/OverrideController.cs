@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using pandora.admin.webapi.DataAccess;
 using pandora.admin.webapi.Models.Auth;
 
 namespace pandora.admin.webapi.Controllers;
@@ -7,10 +9,14 @@ namespace pandora.admin.webapi.Controllers;
 public class OverrideController : ControllerBase
 {
     private readonly ILogger<OverrideController> _logger;
+    private readonly PandoraAdminContext _dbContext;
 
-    public OverrideController(ILogger<OverrideController> logger)
+    public OverrideController(ILogger<OverrideController> logger, PandoraAdminContext dbContext)
     {
         _logger = logger;
+        _dbContext = dbContext;
+        var c = dbContext.Users.ToList();
+        
     }
 
     [HttpPost("/auth/login")]

@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using pandora.admin.webapi.DataAccess;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -9,6 +12,9 @@ builder.Services.AddEndpointsApiExplorer();
 // builder.Services.AddOcelot();
 
 builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+//builder.Configuration.GetConnectionString("Default")
+builder.Services.AddDbContext<PandoraAdminContext>(options => options.UseMySQL(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddSwaggerGen();
 
@@ -22,17 +28,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
-// app.UseHttpsRedirection();
-//
-// app.UseAuthorization();
-
 Dictionary<string, HashSet<string>> overridePaths = new Dictionary<string, HashSet<string>>()
 {
     { "/auth/login", new HashSet<string>() { "POST" } },
     { "/log_conversation", new HashSet<string>() { "POST" } }
 };
-
 
 app.UseStaticFiles();
 
