@@ -20,6 +20,15 @@ builder.Services.AddDbContext<PandoraAdminContext>(options =>
 
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddMemoryCache();
+
+//
+// builder.WebHost.UseDefaultServiceProvider(o =>
+// {
+//     o.ValidateOnBuild = true;
+//     o.ValidateScopes = true;
+// });
+
 var app = builder.Build();
 
 

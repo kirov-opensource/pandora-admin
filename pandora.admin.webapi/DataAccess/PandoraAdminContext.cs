@@ -124,6 +124,9 @@ public partial class PandoraAdminContext : DbContext
             entity.Property(e => e.Remark)
                 .HasMaxLength(500)
                 .HasColumnName("remark");
+            entity.Property(e => e.UserToken)
+                .HasMaxLength(500)
+                .HasColumnName("user_token");
             entity.Property(e => e.Role)
                 .HasMaxLength(500)
                 .HasColumnName("role");
