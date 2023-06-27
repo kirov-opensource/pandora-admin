@@ -32,7 +32,7 @@ public partial class PandoraAdminContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.AccessToken1)
-                .HasMaxLength(500)
+                .HasMaxLength(2000)
                 .HasColumnName("access_token");
             entity.Property(e => e.CreateTime)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -53,7 +53,7 @@ public partial class PandoraAdminContext : DbContext
                 .HasMaxLength(500)
                 .HasColumnName("password");
             entity.Property(e => e.RefreshToken)
-                .HasMaxLength(500)
+                .HasMaxLength(2000)
                 .HasColumnName("refresh_token");
             entity.Property(e => e.Remark)
                 .HasMaxLength(500)

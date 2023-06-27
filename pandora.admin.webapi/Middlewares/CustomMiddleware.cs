@@ -1,9 +1,12 @@
+using System.IO.Compression;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
 using pandora.admin.webapi.DataAccess;
+using pandora.admin.webapi.Models;
 
 namespace pandora.admin.webapi.Middlewares;
 
@@ -28,6 +31,8 @@ public class CustomMiddleware
 
     public async Task Invoke(HttpContext context)
     {
+        #region token convert
+
         var _dbContext = context.RequestServices.GetRequiredService<PandoraAdminContext>();
 
         bool isSubUser = false;
@@ -44,42 +49,92 @@ public class CustomMiddleware
             }
         }
 
-        // convert auth token
-        await _next.Invoke(context);
-
-        if (isSubUser)
-        {
-            //filter conversation
-        }
+        #endregion
 
         //获取原始的Response Body
-        // var originalResponseBody = context.Response.Body;
-        // try
-        // {
-        //     //声明一个MemoryStream替换Response Body
-        //     using var swapStream = new MemoryStream();
-        //     context.Response.Body = swapStream;
-        //     // 调用下一个中间件（请求转发）
-        //     await _next.Invoke(context);
-        //
-        //     //重置标识位
-        //     context.Response.Body.Seek(0, SeekOrigin.Begin);
-        //     //把替换后的Response Body复制到原始的Response Body
-        //     await swapStream.CopyToAsync(originalResponseBody);
-        //
-        //     if (context.Response.ContentType == "text/event-stream; charset=utf-8")
-        //     {
-        //         var bytes = swapStream.ToArray();
-        //         var responseText = Encoding.UTF8.GetString(bytes);
-        //         var conversationId = GetConversationId(responseText);
-        //         _logger.LogInformation(conversationId);
-        //     }
-        // }
-        // finally
-        // {
-        //     //无论异常与否都要把原始的Body给切换回来
-        //     context.Response.Body = originalResponseBody;
-        // }
+        var originalResponseBody = context.Response.Body;
+        {
+            // Console.WriteLine("LoggingMiddleware invoked.");
+
+            // var originalBody = context.Response.Body;
+            // using var newBody = new MemoryStream();
+            // context.Response.Body = newBody;
+
+            // try
+            // {
+            //     await this._next(context);
+            // }
+            // finally
+            // {
+            //     newBody.Seek(0, SeekOrigin.Begin);
+            //     var bodyText = await new StreamReader(new BrotliStream(context.Response.Body, CompressionMode.Decompress)).ReadToEndAsync();
+            //     Console.WriteLine($"LoggingMiddleware: {bodyText}");
+            //     newBody.Seek(0, SeekOrigin.Begin);
+            //     await newBody.CopyToAsync(originalBody);
+            // }
+        }
+
+        try
+        {
+            //声明一个MemoryStream替换Response Body
+            using var swapStream = new MemoryStream();
+            context.Response.Body = swapStream;
+            // 调用下一个中间件（请求转发）
+            await _next.Invoke(context);
+
+            //重置标识位
+            swapStream.Seek(0, SeekOrigin.Begin);
+            //把替换后的Response Body复制到原始的Response Body
+            // string bodyContent = await new StreamReader(swapStream).ReadToEndAsync();
+
+            //只有子账户需要替换响应信息，避免错乱。
+            if (context.Response.ContentType == "application/json" && context.Response.StatusCode == 200 && isSubUser)
+            {
+                var bodyText =
+                    await new StreamReader(new BrotliStream(context.Response.Body, CompressionMode.Decompress))
+                        .ReadToEndAsync();
+                // var bodyText = await new StreamReader(new BrotliStream(swapStream, CompressionMode.Decompress)).ReadToEndAsync();
+                // TODO: 仅仅替换会话列表
+                if (context.Request.Path.StartsWithSegments("/gpt/api/conversations") &&
+                    context.Request.Method == "GET" && false)
+                {
+                    var parsedBody = JsonSerializer.Deserialize<GetConversationResponseModel>(bodyText);
+                    var userConversationIds = await GetConverstaionListBySubToken(_dbContext, userToken);
+                    parsedBody.Items = parsedBody.Items.Where(c => userConversationIds.Contains(c.Id)).ToList();
+                    var newBodyText = JsonSerializer.Serialize(parsedBody);
+                    //write json to response body
+                    await context.Response.WriteAsync(newBodyText);
+                }
+                else
+                {
+                    //重置标识位
+                    swapStream.Seek(0, SeekOrigin.Begin);
+                    await swapStream.CopyToAsync(originalResponseBody);
+                }
+
+                _logger.LogInformation(bodyText);
+            }
+            else
+            {
+                //重置标识位
+                swapStream.Seek(0, SeekOrigin.Begin);
+                await swapStream.CopyToAsync(originalResponseBody);
+            }
+        }
+        finally
+        {
+            //无论异常与否都要把原始的Body给切换回来
+            context.Response.Body = originalResponseBody;
+        }
+    }
+
+    private async Task<HashSet<string>> GetConverstaionListBySubToken(PandoraAdminContext _dbContext, string userToken)
+    {
+        var userId = await _dbContext.Users.Where(c => c.UserToken == userToken)
+            .Select(c => c.Id).FirstOrDefaultAsync();
+        var conversationIds = await _dbContext.Conversations.Where(c => c.CreateUserId == userId)
+            .Select(c => c.ConversationId).ToListAsync();
+        return new HashSet<string>(conversationIds);
     }
 
     private async Task<string> ConvertSubTokenToOriginToken(PandoraAdminContext _dbContext, string userToken)

@@ -73,6 +73,10 @@ app.UseWhen(context =>
     if (needRedirect == false)
     {
     }
+    else
+    {
+        // context.Request.EnableBuffering();
+    }
 
     return needRedirect;
 }, action =>
