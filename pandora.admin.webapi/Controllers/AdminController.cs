@@ -1,26 +1,28 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using pandora.admin.webapi.DataAccess;
-using pandora.admin.webapi.Entities;
+using Pandora.Admin.WebAPI.DataAccess;
+using Pandora.Admin.WebAPI.Entities;
+using Pandora.Admin.WebAPI.Policies;
 
-namespace pandora.admin.webapi.Controllers;
+namespace Pandora.Admin.WebAPI.Controllers;
 
+[Authorize(policy: PolicyConstant.AdministratorOnly)]
 [ApiController]
 [Route("/pandora_admin")]
-public class AdminController : ControllerBase
+public class AdminController : BaseController
 {
     private readonly PandoraAdminContext _dbContext;
 
-    private readonly Logger<AdminController> _logger;
+    public AdminController(PandoraAdminContext dbContext, ILoggerFactory loggerFactory) : base(loggerFactory)
+    {
+        _dbContext = dbContext;
+    }
 
     //TODO,fill user id
     private int userId { get; set; } = 0;
 
-    public AdminController(PandoraAdminContext dbContext, Logger<AdminController> logger)
-    {
-        _dbContext = dbContext;
-        _logger = logger;
-    }
+
 
     #region user
 
@@ -144,7 +146,7 @@ public class AdminController : ControllerBase
         }
 
         //TODO,refresh token
-        
+
         await _dbContext.SaveChangesAsync();
         return Ok();
     }

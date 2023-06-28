@@ -1,23 +1,20 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using pandora.admin.webapi.DataAccess;
-using pandora.admin.webapi.Models.Auth;
+using Pandora.Admin.WebAPI.DataAccess;
+using Pandora.Admin.WebAPI.Models.Auth;
 
-namespace pandora.admin.webapi.Controllers;
+namespace Pandora.Admin.WebAPI.Controllers;
 
 [ApiController]
-public class OverrideController : ControllerBase
+public class OverrideController : BaseController
 {
-    private readonly ILogger<OverrideController> _logger;
     private readonly PandoraAdminContext _dbContext;
     private readonly IMemoryCache _cahce;
 
-    public OverrideController(ILogger<OverrideController> logger, PandoraAdminContext dbContext)
+    public OverrideController(PandoraAdminContext dbContext, ILoggerFactory loggerFactory) : base(loggerFactory)
     {
-        _logger = logger;
         _dbContext = dbContext;
-        // var c = dbContext.Users.ToList();
     }
 
     [HttpPost("/auth/login")]

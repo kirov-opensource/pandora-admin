@@ -1,15 +1,15 @@
-using System.IO.Compression;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
-using pandora.admin.webapi.DataAccess;
-using pandora.admin.webapi.Models;
+using Pandora.Admin.WebAPI.DataAccess;
+using Pandora.Admin.WebAPI.Models;
+using System.IO.Compression;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
-namespace pandora.admin.webapi.Middlewares;
+namespace Pandora.Admin.WebAPI.Middlewares;
 
+using System.Text;
 using System.Threading.Tasks;
 
 public class CustomMiddleware
@@ -134,6 +134,10 @@ public class CustomMiddleware
                     // await context.Response.WriteAsync(newBodyText);
                     // await context.Response.Body.FlushAsync();
                     // return;
+                    context.Response.OnStarting(() =>
+                    {
+                        return context.Response.WriteAsync(newBodyText);
+                    });
                 }
                 else
                 {

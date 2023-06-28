@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace pandora.admin.webapi.Models;
+namespace Pandora.Admin.WebAPI.Models;
 
 public class GetConversationResponseModel
 {

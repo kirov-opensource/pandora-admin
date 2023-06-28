@@ -2,12 +2,13 @@
 
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
-        <Nullable>enable</Nullable>
+        <Nullable>disable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.8" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.4" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.8">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -15,6 +16,7 @@
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="7.0.0" />
         <PackageReference Include="MySql.EntityFrameworkCore" Version="7.0.2" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
         <PackageReference Include="Yarp.ReverseProxy" Version="2.0.1" />
     </ItemGroup>

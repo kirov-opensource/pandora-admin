@@ -1,6 +1,13 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using pandora.admin.webapi.DataAccess;
-using pandora.admin.webapi.Middlewares;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
+using Microsoft.OpenApi.Models;
+using Pandora.Admin.WebAPI.DataAccess;
+using Pandora.Admin.WebAPI.Extensions;
+using Pandora.Admin.WebAPI.Middlewares;
+using Pandora.Admin.WebAPI.Policies;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +29,53 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddMemoryCache();
 
+// JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+.AddJwtBearer(cfg =>
+{
+    cfg.RequireHttpsMetadata = false;
+    cfg.SaveToken = false;
+    cfg.TokenValidationParameters = new TokenValidationParameters()
+    {
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetSection("JWTSecurityKey").Get<string>())),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateIssuerSigningKey = true,
+        ValidateLifetime = true
+    };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(PolicyConstant.AdministratorOnly, policy => policy.RequireClaim(ClaimTypesExtension.Administrator));
+});
+
+// 添加Swagger UI服务
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Pandora.Admin.WebAPI", Version = "v1" });
+
+    options.DocInclusionPredicate((docName, description) => true);
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Token",
+        Name = HeaderNames.Authorization,
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey
+    });
+    //认证方式，此方式为全局添加
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement {
+                    { new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference()
+                        {
+                            Id = "Bearer",
+                            Type = ReferenceType.SecurityScheme
+                        }
+                    }, Array.Empty<string>() }
+    });
+});
+
 //
 // builder.WebHost.UseDefaultServiceProvider(o =>
 // {
@@ -30,7 +84,7 @@ builder.Services.AddMemoryCache();
 // });
 
 var app = builder.Build();
-
+app.UseExceptionHandlerMiddleware();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -117,6 +171,9 @@ app.UseWhen(context =>
 
     return needRedirect;
 }, action => { app.MapReverseProxy(); });
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

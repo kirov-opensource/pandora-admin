@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using pandora.admin.webapi.Entities;
+using Pandora.Admin.WebAPI.Entities;
 
-namespace pandora.admin.webapi.DataAccess;
+namespace Pandora.Admin.WebAPI.DataAccess;
 
 public partial class PandoraAdminContext : DbContext
 {

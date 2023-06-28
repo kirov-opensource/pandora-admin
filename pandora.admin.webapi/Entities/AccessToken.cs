@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace pandora.admin.webapi.Entities;
+namespace Pandora.Admin.WebAPI.Entities;
 
 public partial class AccessToken
 {

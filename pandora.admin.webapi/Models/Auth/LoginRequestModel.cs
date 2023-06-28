@@ -1,4 +1,4 @@
-namespace pandora.admin.webapi.Models.Auth;
+namespace Pandora.Admin.WebAPI.Models.Auth;
 
 public class LoginRequestModel
 {
