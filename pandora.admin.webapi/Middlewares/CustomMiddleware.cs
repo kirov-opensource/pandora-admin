@@ -96,14 +96,44 @@ public class CustomMiddleware
                 // var bodyText = await new StreamReader(new BrotliStream(swapStream, CompressionMode.Decompress)).ReadToEndAsync();
                 // TODO: 仅仅替换会话列表
                 if (context.Request.Path.StartsWithSegments("/gpt/api/conversations") &&
-                    context.Request.Method == "GET" && false)
+                    context.Request.Method == "GET")
                 {
                     var parsedBody = JsonSerializer.Deserialize<GetConversationResponseModel>(bodyText);
                     var userConversationIds = await GetConverstaionListBySubToken(_dbContext, userToken);
                     parsedBody.Items = parsedBody.Items.Where(c => userConversationIds.Contains(c.Id)).ToList();
                     var newBodyText = JsonSerializer.Serialize(parsedBody);
                     //write json to response body
+                    // context.Response.Headers["Content-Encoding"] = "none";
+                    // await context.Response.WriteAsync(newBodyText);
+
+
+                    // 重新压缩 02
+                    // var bytes = Encoding.UTF8.GetBytes(newBodyText);
+                    // var outputStream = new MemoryStream();
+                    // var compressor = new BrotliStream(outputStream, CompressionMode.Compress, true);
+                    // await new MemoryStream(bytes).CopyToAsync(compressor);
+                    // await outputStream.CopyToAsync(originalResponseBody);
+
+                    var bytes = Encoding.UTF8.GetBytes(newBodyText);
+                    await new MemoryStream(bytes).CopyToAsync(originalResponseBody);
+                    // context.Response.Headers["Content-Encoding"] = ""; 
+                    context.Response.Body = originalResponseBody;
                     await context.Response.WriteAsync(newBodyText);
+                    await context.Response.Body.FlushAsync(); //Error: Decompression failed
+
+
+                    // 重新压缩 01
+                    // var bytes = Encoding.UTF8.GetBytes(newBodyText);
+                    // var compressBytes = new Span<byte>();
+                    // var newStream = new BrotliStream(new MemoryStream(bytes), CompressionMode.Compress);
+                    // BrotliEncoder.TryCompress(bytes,out compressBytes,)
+                    // await newStream.CopyToAsync(originalResponseBody); //System.NotSupportedException: Stream does not support reading.
+
+                    // 直接写
+                    // context.Response.Headers["Content-Encoding"] = "";
+                    // await context.Response.WriteAsync(newBodyText);
+                    // await context.Response.Body.FlushAsync();
+                    // return;
                 }
                 else
                 {
