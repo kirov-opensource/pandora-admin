@@ -19,7 +19,8 @@ builder.Services.AddEndpointsApiExplorer();
 
 // builder.Services.AddOcelot();
 
-builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
 //builder.Configuration.GetConnectionString("Default")
 builder.Services.AddDbContext<PandoraAdminContext>(options =>
@@ -50,7 +51,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(PolicyConstant.AdministratorOnly, policy => policy.RequireClaim(ClaimTypesExtension.Administrator));
 });
 
-// Ìí¼ÓSwagger UI·þÎñ
+// ï¿½ï¿½ï¿½Swagger UIï¿½ï¿½ï¿½ï¿½
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Pandora.Admin.WebAPI", Version = "v1" });
@@ -63,7 +64,7 @@ builder.Services.AddSwaggerGen(options =>
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey
     });
-    //ÈÏÖ¤·½Ê½£¬´Ë·½Ê½ÎªÈ«¾ÖÌí¼Ó
+    //ï¿½ï¿½Ö¤ï¿½ï¿½Ê½ï¿½ï¿½ï¿½Ë·ï¿½Ê½ÎªÈ«ï¿½ï¿½ï¿½ï¿½ï¿½
     options.AddSecurityRequirement(new OpenApiSecurityRequirement {
                     { new OpenApiSecurityScheme
                     {

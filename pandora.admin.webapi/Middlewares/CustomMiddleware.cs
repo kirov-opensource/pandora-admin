@@ -164,6 +164,8 @@ public class CustomMiddleware
 
     private async Task<HashSet<string>> GetConverstaionListBySubToken(PandoraAdminContext _dbContext, string userToken)
     {
+        return new HashSet<string>();
+        
         var userId = await _dbContext.Users.Where(c => c.UserToken == userToken)
             .Select(c => c.Id).FirstOrDefaultAsync();
         var conversationIds = await _dbContext.Conversations.Where(c => c.CreateUserId == userId)
@@ -173,6 +175,9 @@ public class CustomMiddleware
 
     private async Task<string> ConvertSubTokenToOriginToken(PandoraAdminContext _dbContext, string userToken)
     {
+
+        return userToken;
+        
         string tokenKey = $"USER:{userToken}:ORIGINTOKEN";
         var hasValue = _cache.TryGetValue<string>(tokenKey, out string? originToken);
         if (hasValue)
