@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 
 namespace Pandora.Admin.WebAPI.Middlewares;
 
+using Microsoft.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -79,6 +80,13 @@ public class CustomMiddleware
             //声明一个MemoryStream替换Response Body
             using var swapStream = new MemoryStream();
             context.Response.Body = swapStream;
+
+            context.Response.OnStarting(() =>
+            {
+                context.Response.Headers.Remove(HeaderNames.ContentEncoding);
+                return Task.CompletedTask;
+            });
+            
             // 调用下一个中间件（请求转发）
             await _next.Invoke(context);
 
@@ -116,10 +124,9 @@ public class CustomMiddleware
 
                     var bytes = Encoding.UTF8.GetBytes(newBodyText);
                     await new MemoryStream(bytes).CopyToAsync(originalResponseBody);
-                    // context.Response.Headers["Content-Encoding"] = ""; 
                     context.Response.Body = originalResponseBody;
-                    await context.Response.WriteAsync(newBodyText);
-                    await context.Response.Body.FlushAsync(); //Error: Decompression failed
+                    // await context.Response.WriteAsync(newBodyText);
+                    // await context.Response.Body.FlushAsync(); //Error: Decompression failed
 
 
                     // 重新压缩 01
