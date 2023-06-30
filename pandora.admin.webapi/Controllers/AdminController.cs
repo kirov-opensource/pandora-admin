@@ -46,6 +46,7 @@ public class AdminController : BaseController
     public async Task<IActionResult> CreateUser([FromBody] User user)
     {
         user.CreateTime = DateTime.Now;
+        user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
         user.CreateUserId = userId;
         await _dbContext.Users.AddAsync(user);
         await _dbContext.SaveChangesAsync();
@@ -77,7 +78,7 @@ public class AdminController : BaseController
         }
 
         userInDb.Email = user.Email;
-        userInDb.Password = user.Password;
+        userInDb.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
         userInDb.Role = user.Role;
         userInDb.Remark = user.Remark;
         userInDb.UpdateTime = DateTime.Now;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -18,19 +19,21 @@ public class OverrideController : BaseController
     }
 
     [HttpPost("/auth/login")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login([FromForm] LoginRequestModel loginModel)
     {
         var user = await _dbContext.Users.FirstOrDefaultAsync(c => c.Email.Equals(loginModel.username));
+
         if (user == null)
         {
             throw new Exception("user not found or password error");
         }
 
-        if (!user.Password.Equals(loginModel.password))
+        if (!BCrypt.Net.BCrypt.Verify(loginModel.password,user.Password))
         {
             throw new Exception("user not found or password error");
         }
-
+        
         Response.Cookies.Append("access-token", user.UserToken, new CookieOptions()
         {
             Expires = DateTimeOffset.Now.AddDays(30),

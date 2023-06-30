@@ -81,12 +81,14 @@ public class CustomMiddleware
             using var swapStream = new MemoryStream();
             context.Response.Body = swapStream;
 
+            context.Request.Headers[HeaderNames.AcceptEncoding] = "br";
+
             context.Response.OnStarting(() =>
             {
                 context.Response.Headers.Remove(HeaderNames.ContentEncoding);
                 return Task.CompletedTask;
             });
-            
+
             // 调用下一个中间件（请求转发）
             await _next.Invoke(context);
 
@@ -110,41 +112,10 @@ public class CustomMiddleware
                     var userConversationIds = await GetConverstaionListBySubToken(_dbContext, userToken);
                     parsedBody.Items = parsedBody.Items.Where(c => userConversationIds.Contains(c.Id)).ToList();
                     var newBodyText = JsonSerializer.Serialize(parsedBody);
-                    //write json to response body
-                    // context.Response.Headers["Content-Encoding"] = "none";
-                    // await context.Response.WriteAsync(newBodyText);
-
-
-                    // 重新压缩 02
-                    // var bytes = Encoding.UTF8.GetBytes(newBodyText);
-                    // var outputStream = new MemoryStream();
-                    // var compressor = new BrotliStream(outputStream, CompressionMode.Compress, true);
-                    // await new MemoryStream(bytes).CopyToAsync(compressor);
-                    // await outputStream.CopyToAsync(originalResponseBody);
 
                     var bytes = Encoding.UTF8.GetBytes(newBodyText);
                     await new MemoryStream(bytes).CopyToAsync(originalResponseBody);
                     context.Response.Body = originalResponseBody;
-                    // await context.Response.WriteAsync(newBodyText);
-                    // await context.Response.Body.FlushAsync(); //Error: Decompression failed
-
-
-                    // 重新压缩 01
-                    // var bytes = Encoding.UTF8.GetBytes(newBodyText);
-                    // var compressBytes = new Span<byte>();
-                    // var newStream = new BrotliStream(new MemoryStream(bytes), CompressionMode.Compress);
-                    // BrotliEncoder.TryCompress(bytes,out compressBytes,)
-                    // await newStream.CopyToAsync(originalResponseBody); //System.NotSupportedException: Stream does not support reading.
-
-                    // 直接写
-                    // context.Response.Headers["Content-Encoding"] = "";
-                    // await context.Response.WriteAsync(newBodyText);
-                    // await context.Response.Body.FlushAsync();
-                    // return;
-                    context.Response.OnStarting(() =>
-                    {
-                        return context.Response.WriteAsync(newBodyText);
-                    });
                 }
                 else
                 {
@@ -171,8 +142,6 @@ public class CustomMiddleware
 
     private async Task<HashSet<string>> GetConverstaionListBySubToken(PandoraAdminContext _dbContext, string userToken)
     {
-        return new HashSet<string>();
-        
         var userId = await _dbContext.Users.Where(c => c.UserToken == userToken)
             .Select(c => c.Id).FirstOrDefaultAsync();
         var conversationIds = await _dbContext.Conversations.Where(c => c.CreateUserId == userId)
@@ -182,9 +151,6 @@ public class CustomMiddleware
 
     private async Task<string> ConvertSubTokenToOriginToken(PandoraAdminContext _dbContext, string userToken)
     {
-
-        return userToken;
-        
         string tokenKey = $"USER:{userToken}:ORIGINTOKEN";
         var hasValue = _cache.TryGetValue<string>(tokenKey, out string? originToken);
         if (hasValue)
