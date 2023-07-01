@@ -6,6 +6,7 @@ using Pandora.Admin.WebAPI.Models;
 using System.IO.Compression;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Pandora.Admin.WebAPI.Extensions;
 
 namespace Pandora.Admin.WebAPI.Middlewares;
 
@@ -15,7 +16,6 @@ using System.Threading.Tasks;
 
 public class CustomMiddleware
 {
-    const string TOKEN_HEADER_NAME = "X-Authorization";
     private readonly RequestDelegate _next;
     private readonly ILogger<CustomMiddleware> _logger;
 
@@ -36,18 +36,21 @@ public class CustomMiddleware
 
         var _dbContext = context.RequestServices.GetRequiredService<PandoraAdminContext>();
 
-        bool isSubUser = false;
-        string userToken = string.Empty;
-        context.Request.Headers.TryGetValue(TOKEN_HEADER_NAME, out StringValues authToken);
-        if (authToken.Count > 0)
+        var userId = int.Parse(context.User.Claims.FirstOrDefault(x => x.Type == ClaimTypesExtension.UserId)?.Value);
+
+        var dbContext = context.RequestServices.GetService<PandoraAdminContext>();
+        var cache = context.RequestServices.GetService<IMemoryCache>();
+
+        var originToken = await dbContext.GetUserOriginToken(cache, userId);
+        if (context.Request.Headers.ContainsKey(Consts.TOKEN_HEADER_NAME))
         {
-            isSubUser = true;
-            userToken = authToken[0].Replace("Bearer ", "");
-            if (userToken.StartsWith("fk-"))
-            {
-                var originToken = await ConvertSubTokenToOriginToken(_dbContext, userToken);
-                context.Request.Headers[TOKEN_HEADER_NAME] = new StringValues($"Bearer {originToken}");
-            }
+            context.Request.Headers[Consts.TOKEN_HEADER_NAME] =
+                new StringValues($"Bearer {originToken}");
+        }
+        else
+        {
+            context.Request.Headers.Add(Consts.TOKEN_HEADER_NAME,
+                new StringValues($"Bearer {originToken}"));
         }
 
         #endregion
@@ -98,7 +101,7 @@ public class CustomMiddleware
             // string bodyContent = await new StreamReader(swapStream).ReadToEndAsync();
 
             //只有子账户需要替换响应信息，避免错乱。
-            if (context.Response.ContentType == "application/json" && context.Response.StatusCode == 200 && isSubUser)
+            if (context.Response.ContentType == "application/json" && context.Response.StatusCode == 200)
             {
                 var bodyText =
                     await new StreamReader(new BrotliStream(context.Response.Body, CompressionMode.Decompress))
@@ -109,7 +112,7 @@ public class CustomMiddleware
                     context.Request.Method == "GET")
                 {
                     var parsedBody = JsonSerializer.Deserialize<GetConversationResponseModel>(bodyText);
-                    var userConversationIds = await GetConverstaionListBySubToken(_dbContext, userToken);
+                    var userConversationIds = await GetConverstaionListBySubToken(_dbContext, userId);
                     parsedBody.Items = parsedBody.Items.Where(c => userConversationIds.Contains(c.Id)).ToList();
                     var newBodyText = JsonSerializer.Serialize(parsedBody);
 
@@ -140,32 +143,13 @@ public class CustomMiddleware
         }
     }
 
-    private async Task<HashSet<string>> GetConverstaionListBySubToken(PandoraAdminContext _dbContext, string userToken)
+    private async Task<HashSet<string>> GetConverstaionListBySubToken(PandoraAdminContext _dbContext, int userId)
     {
-        var userId = await _dbContext.Users.Where(c => c.UserToken == userToken)
-            .Select(c => c.Id).FirstOrDefaultAsync();
         var conversationIds = await _dbContext.Conversations.Where(c => c.CreateUserId == userId)
             .Select(c => c.ConversationId).ToListAsync();
         return new HashSet<string>(conversationIds);
     }
 
-    private async Task<string> ConvertSubTokenToOriginToken(PandoraAdminContext _dbContext, string userToken)
-    {
-        string tokenKey = $"USER:{userToken}:ORIGINTOKEN";
-        var hasValue = _cache.TryGetValue<string>(tokenKey, out string? originToken);
-        if (hasValue)
-        {
-            return originToken;
-        }
-
-        var userDefaultAccessTokenId = await _dbContext.Users.Where(c => c.UserToken == userToken)
-            .Select(c => c.DefaultAccessTokenId).FirstOrDefaultAsync();
-        originToken = await _dbContext.AccessTokens.Where(c => c.Id == userDefaultAccessTokenId)
-            .Select(c => c.AccessToken1).FirstOrDefaultAsync();
-
-        _cache.Set($"USER:{userToken}:ORIGINTOKEN", originToken);
-        return originToken;
-    }
 
     private string GetConversationId(string text)
     {

@@ -14,16 +14,14 @@ public class AdminController : BaseController
 {
     private readonly PandoraAdminContext _dbContext;
 
-    public AdminController(PandoraAdminContext dbContext, ILoggerFactory loggerFactory) : base(loggerFactory)
+    public AdminController(PandoraAdminContext dbContext, ILoggerFactory loggerFactory) : base(loggerFactory, dbContext)
     {
         _dbContext = dbContext;
     }
 
     //TODO,fill user id
     private int userId { get; set; } = 0;
-
-
-
+    
     #region user
 
     /// <summary>
