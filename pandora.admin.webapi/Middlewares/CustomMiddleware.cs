@@ -42,41 +42,16 @@ public class CustomMiddleware
         var cache = context.RequestServices.GetService<IMemoryCache>();
 
         var originToken = await dbContext.GetUserOriginToken(cache, userId);
-        if (context.Request.Headers.ContainsKey(Consts.TOKEN_HEADER_NAME))
-        {
-            context.Request.Headers[Consts.TOKEN_HEADER_NAME] =
-                new StringValues($"Bearer {originToken}");
-        }
-        else
-        {
-            context.Request.Headers.Add(Consts.TOKEN_HEADER_NAME,
-                new StringValues($"Bearer {originToken}"));
-        }
+
+        context.Request.Headers.Remove("Cookie");
+        context.Request.Headers.Add("Cookie", $"access-token={originToken}");
+        context.Request.Headers.Remove(Consts.TOKEN_HEADER_NAME);
+        context.Request.Headers.Add(Consts.TOKEN_HEADER_NAME, $"Bearer {originToken}");
 
         #endregion
 
         //获取原始的Response Body
         var originalResponseBody = context.Response.Body;
-        {
-            // Console.WriteLine("LoggingMiddleware invoked.");
-
-            // var originalBody = context.Response.Body;
-            // using var newBody = new MemoryStream();
-            // context.Response.Body = newBody;
-
-            // try
-            // {
-            //     await this._next(context);
-            // }
-            // finally
-            // {
-            //     newBody.Seek(0, SeekOrigin.Begin);
-            //     var bodyText = await new StreamReader(new BrotliStream(context.Response.Body, CompressionMode.Decompress)).ReadToEndAsync();
-            //     Console.WriteLine($"LoggingMiddleware: {bodyText}");
-            //     newBody.Seek(0, SeekOrigin.Begin);
-            //     await newBody.CopyToAsync(originalBody);
-            // }
-        }
 
         try
         {
@@ -106,7 +81,6 @@ public class CustomMiddleware
                 var bodyText =
                     await new StreamReader(new BrotliStream(context.Response.Body, CompressionMode.Decompress))
                         .ReadToEndAsync();
-                // var bodyText = await new StreamReader(new BrotliStream(swapStream, CompressionMode.Decompress)).ReadToEndAsync();
                 // TODO: 仅仅替换会话列表
                 if (context.Request.Path.StartsWithSegments("/gpt/api/conversations") &&
                     context.Request.Method == "GET")

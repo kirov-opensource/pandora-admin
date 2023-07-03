@@ -35,22 +35,19 @@ builder.Services.AddReverseProxy()
             {
                 var userId =
                     int.Parse(transformContext.HttpContext.User.Claims
-                        .FirstOrDefault(c => c.Type == ClaimTypesExtension.UserId).Value);
-                var dbContext = transformContext.HttpContext.RequestServices.GetService<PandoraAdminContext>();
-                var cache = transformContext.HttpContext.RequestServices.GetService<IMemoryCache>();
+                        .FirstOrDefault(c => c.Type == ClaimTypesExtension.UserId)?.Value ?? "0");
+                if (userId > 0)
+                {
+                    var dbContext = transformContext.HttpContext.RequestServices.GetService<PandoraAdminContext>();
+                    var cache = transformContext.HttpContext.RequestServices.GetService<IMemoryCache>();
 
-                var originToken = await dbContext.GetUserOriginToken(cache, userId);
-                if (transformContext.HttpContext.Request.Headers.ContainsKey(Consts.TOKEN_HEADER_NAME))
-                {
-                    transformContext.HttpContext.Request.Headers[Consts.TOKEN_HEADER_NAME] =
-                        new StringValues($"Bearer {originToken}");
+                    var originToken = await dbContext.GetUserOriginToken(cache, userId);
+
+                    transformContext.ProxyRequest.Headers.Remove("Cookie");
+                    transformContext.ProxyRequest.Headers.Add("Cookie", $"access-token={originToken}");
+                    transformContext.ProxyRequest.Headers.Remove(Consts.TOKEN_HEADER_NAME);
+                    transformContext.ProxyRequest.Headers.Add(Consts.TOKEN_HEADER_NAME, $"Bearer {originToken}");
                 }
-                else
-                {
-                    transformContext.HttpContext.Request.Headers.Add(Consts.TOKEN_HEADER_NAME,
-                        new StringValues($"Bearer {originToken}"));
-                }
-                //transform token
             }
         });
     });
@@ -87,8 +84,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 if (context.Request.Cookies.ContainsKey(pandoraAdminHeaderNames))
                 {
-                    context.Token = context.Request.Cookies[pandoraAdminHeaderNames].ToString().Replace("Bearer ", "")
-                        .Replace("fk-", "");
+                    context.Token = context.Request.Cookies[pandoraAdminHeaderNames].ToString().Replace("Bearer ", "");
                 }
 
                 return Task.CompletedTask;

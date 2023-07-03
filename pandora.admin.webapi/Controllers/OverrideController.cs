@@ -65,7 +65,7 @@ public class OverrideController : BaseController
             expires: DateTime.Now.AddDays(7),
             signingCredentials: creds);
 
-        Response.Cookies.Append("access-token", "fk-" + new JwtSecurityTokenHandler().WriteToken(token),
+        Response.Cookies.Append("access-token", new JwtSecurityTokenHandler().WriteToken(token),
             new CookieOptions()
             {
                 Expires = DateTimeOffset.Now.AddDays(30),
