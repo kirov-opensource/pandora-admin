@@ -7,7 +7,8 @@ FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 COPY ["./pandora.admin.webapi.csproj", "pandora.admin.webapi/"]
 RUN dotnet restore "pandora.admin.webapi/pandora.admin.webapi.csproj"
-COPY . .
+COPY ["./pandora.admin.webapi/**", "pandora.admin.webapi/"]
+
 WORKDIR "/src/pandora.admin.webapi"
 RUN dotnet build "pandora.admin.webapi.csproj" -c Release -o /app/build
 
