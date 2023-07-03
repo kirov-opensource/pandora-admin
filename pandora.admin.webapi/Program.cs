@@ -17,7 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-const string pandoraAdminHeaderNames = "x-pandora-admin-token";
+const string pandoraAdminHeaderNames = "access-token";
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -87,7 +87,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 if (context.Request.Cookies.ContainsKey(pandoraAdminHeaderNames))
                 {
-                    context.Token = context.Request.Cookies[pandoraAdminHeaderNames].ToString().Replace("Bearer ", "");
+                    context.Token = context.Request.Cookies[pandoraAdminHeaderNames].ToString().Replace("Bearer ", "")
+                        .Replace("fk-", "");
                 }
 
                 return Task.CompletedTask;
