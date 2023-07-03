@@ -5,14 +5,14 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
-COPY ["Pandora.Admin.WebAPI/Pandora.Admin.WebAPI.csproj", "Pandora.Admin.WebAPI/"]
-RUN dotnet restore "Pandora.Admin.WebAPI/Pandora.Admin.WebAPI.csproj"
+COPY ["./pandora.admin.webapi.csproj", "pandora.admin.webapi/"]
+RUN dotnet restore "pandora.admin.webapi/pandora.admin.webapi.csproj"
 COPY . .
-WORKDIR "/src/Pandora.Admin.WebAPI"
-RUN dotnet build "Pandora.Admin.WebAPI.csproj" -c Release -o /app/build
+WORKDIR "/src/pandora.admin.webapi"
+RUN dotnet build "pandora.admin.webapi.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Pandora.Admin.WebAPI.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "pandora.admin.webapi.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
