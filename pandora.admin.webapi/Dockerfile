@@ -18,4 +18,4 @@ RUN dotnet publish "pandora.admin.webapi.csproj" -c Release -o /app/publish /p:U
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Pandora.Admin.WebAPI.dll"]
+ENTRYPOINT ["dotnet", "pandora.admin.webapi.dll"]
