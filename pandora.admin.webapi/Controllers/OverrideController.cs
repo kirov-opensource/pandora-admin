@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Pandora.Admin.WebAPI.DataAccess;
+using Pandora.Admin.WebAPI.Entities;
 using Pandora.Admin.WebAPI.Extensions;
 using Pandora.Admin.WebAPI.Models;
 using Pandora.Admin.WebAPI.Models.Auth;
@@ -106,6 +107,16 @@ public class OverrideController : BaseController
     [HttpPost("/log_conversation")]
     public async Task<IActionResult> LogConversation([FromBody] string[] conversationIds)
     {
+        await _dbContext.Conversations.AddAsync(new Conversation()
+        {
+            ConversationId = conversationIds[0],
+            CreateTime = DateTime.Now,
+            UpdateTime = DateTime.Now,
+            AccessTokenId = 1,
+            CreateUserId = CurrentUser.Id,
+        });
+        await _dbContext.SaveChangesAsync();
+        
         return NoContent();
     }
 }
