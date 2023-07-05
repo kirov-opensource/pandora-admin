@@ -54,7 +54,8 @@ builder.Services.AddReverseProxy()
 
 //builder.Configuration.GetConnectionString("Default")
 builder.Services.AddDbContext<PandoraAdminContext>(options =>
-    options.UseMySQL(builder.Configuration.GetConnectionString("Default")));
+    options.UseMySql(builder.Configuration.GetConnectionString("Default"),
+        new MySqlServerVersion(new Version(8, 0, 29))));
 
 builder.Services.AddSwaggerGen();
 
