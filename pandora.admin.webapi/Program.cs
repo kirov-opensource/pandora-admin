@@ -192,6 +192,8 @@ app.UseWhen(context =>
     return needRedirect;
 }, action =>
 {
+    app.UseStaticFiles();
+    app.UseRouting();
     action.UseMiddleware<CustomMiddleware>();
     app.MapReverseProxy();
 });
@@ -227,7 +229,14 @@ app.UseWhen(context =>
     }
 
     return needRedirect;
-}, action => { app.MapReverseProxy(); });
+}, action =>
+{
+    
+    app.UseStaticFiles();
+    app.UseRouting();
+    
+    app.MapReverseProxy();
+});
 
 
 app.MapControllers();
