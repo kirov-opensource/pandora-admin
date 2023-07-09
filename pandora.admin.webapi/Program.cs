@@ -155,6 +155,7 @@ Dictionary<string, HashSet<string>> overridePaths = new Dictionary<string, HashS
 
 Dictionary<string, HashSet<string>> redirectWithMiddlewarePaths = new Dictionary<string, HashSet<string>>()
 {
+    { "/_next/static/chunks/pages/app-", new HashSet<string>() { "GET" } },
     { "/gpt/api/conversations", new HashSet<string>() { "GET" } }
 };
 
@@ -171,7 +172,7 @@ app.UseWhen(context =>
     var needRedirect = false;
     foreach (var pathInfo in redirectWithMiddlewarePaths)
     {
-        if (context.Request.Path.StartsWithSegments(pathInfo.Key))
+        if (context.Request.Path.StartsWithSegments(pathInfo.Key) || context.Request.Path.ToString().StartsWith(pathInfo.Key))
         {
             if (pathInfo.Value.Contains(context.Request.Method))
             {
@@ -192,8 +193,6 @@ app.UseWhen(context =>
     return needRedirect;
 }, action =>
 {
-    app.UseStaticFiles();
-    app.UseRouting();
     action.UseMiddleware<CustomMiddleware>();
     app.MapReverseProxy();
 });
@@ -231,10 +230,6 @@ app.UseWhen(context =>
     return needRedirect;
 }, action =>
 {
-    
-    app.UseStaticFiles();
-    app.UseRouting();
-    
     app.MapReverseProxy();
 });
 

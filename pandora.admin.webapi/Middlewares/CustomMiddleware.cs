@@ -59,7 +59,7 @@ public class CustomMiddleware
             using var swapStream = new MemoryStream();
             context.Response.Body = swapStream;
 
-            context.Request.Headers[HeaderNames.AcceptEncoding] = "br";
+            context.Request.Headers[HeaderNames.AcceptEncoding] = "";
 
             context.Response.OnStarting(() =>
             {
@@ -76,15 +76,17 @@ public class CustomMiddleware
             // string bodyContent = await new StreamReader(swapStream).ReadToEndAsync();
 
             //只有子账户需要替换响应信息，避免错乱。
-            if (context.Response.ContentType == "application/json" && context.Response.StatusCode == 200)
+            if (context.Response.StatusCode == 200)
             {
-                var bodyText =
-                    await new StreamReader(new BrotliStream(context.Response.Body, CompressionMode.Decompress))
-                        .ReadToEndAsync();
                 // TODO: 仅仅替换会话列表
-                if (context.Request.Path.StartsWithSegments("/gpt/api/conversations") &&
-                    context.Request.Method == "GET")
+                if (context.Request.Path.StartsWithSegments("/gpt/api/conversations")
+                    && context.Request.Method == "GET"
+                    && context.Response.ContentType == "application/json")
                 {
+                    var bodyText =
+                        //new BrotliStream(, CompressionMode.Decompress)
+                        await new StreamReader(context.Response.Body)
+                            .ReadToEndAsync();
                     var parsedBody = JsonSerializer.Deserialize<GetConversationResponseModel>(bodyText);
                     var userConversationIds = await GetConverstaionListBySubToken(_dbContext, userId);
                     parsedBody.Items = parsedBody.Items.Where(c => userConversationIds.Contains(c.Id)).ToList();
@@ -93,6 +95,23 @@ public class CustomMiddleware
                     var bytes = Encoding.UTF8.GetBytes(newBodyText);
                     await new MemoryStream(bytes).CopyToAsync(originalResponseBody);
                     context.Response.Body = originalResponseBody;
+                    _logger.LogInformation(bodyText);
+                }
+                else if (context.Request.Path.ToString().StartsWith("/_next/static/chunks/pages/app-")
+                         && context.Request.Method == "GET"
+                         && context.Response.ContentType == "application/javascript; charset=utf-8")
+                {
+                    var bodyText = await new StreamReader(context.Response.Body).ReadToEndAsync();
+                    var newBodyText = bodyText.Replace(
+                        @"onmessage:function(U){if(""[DONE]""===U.data)X.abort(),B({type:""done""});else if(""ping""===U.event);else try{",
+                        @"onmessage:function(U){if(""[DONE]""===U.data)X.abort(),B({type:""done""});else if(""ping""===U.event);else try{ try{var data=JSON.parse(U.data);var conversationId=data.conversation_id;if(conversationId){if(!localStorage.getItem(conversationId)){localStorage.setItem(conversationId,'1');fetch('/log_conversation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify([conversationId])})}}}catch(err){console.error(err)}");
+
+                    var bytes = Encoding.UTF8.GetBytes(newBodyText);
+                    context.Response.ContentLength += (newBodyText.Length - bodyText.Length);
+                    await new MemoryStream(bytes).CopyToAsync(originalResponseBody);
+                    // context.Response.StatusCode = 200;
+                    // context.Response.ContentType = "text/plain";
+                    context.Response.Body = originalResponseBody;
                 }
                 else
                 {
@@ -100,8 +119,6 @@ public class CustomMiddleware
                     swapStream.Seek(0, SeekOrigin.Begin);
                     await swapStream.CopyToAsync(originalResponseBody);
                 }
-
-                _logger.LogInformation(bodyText);
             }
             else
             {
