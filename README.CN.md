@@ -10,6 +10,7 @@
 - [ ] 6、支持ARM
 - [x] 7、移除JS文件，通过代码进行替换。
 - [ ] 8、头像正常展示
+- [ ] 9、自动初始化DB
 
 ## 部署
 * 1、 首先需要一个MySQL DB，推荐免费的MySQL服务[planetscale](https://app.planetscale.com/)，然后执行[初始化SQL文件](Initial.sql)。
