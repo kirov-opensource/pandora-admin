@@ -47,3 +47,7 @@ create table users
     user_token              varchar(500)                         null
 );
 
+
+INSERT INTO users (password, email, role, remark, is_admin, default_access_token_id, create_time, create_user_id, update_time, update_user_id, delete_time, delete_user_id, user_token) VALUES ('$2a$12$gnaF7njraeVm4iZqybkrLeGyGVK2Gr1zk3hPuLAP05oQhrqItjSU2', 'admin@kirovopensource.com', 'level1', null, 0, 1, '2023-06-25 17:57:25', 0, '2023-06-25 17:57:30', null, null, null, '');
+
+INSERT INTO access_tokens (access_token, refresh_token, email, password, remark, expire_time, create_time, create_user_id, update_time, update_user_id, delete_time, delete_user_id) VALUES ('ACCESS-TOKEN', '1', null, null, null, null, '2023-06-26 22:54:31', null, '2023-06-26 22:54:31', null, null, null);
