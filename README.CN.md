@@ -16,7 +16,9 @@
 - [ ] 6、自动初始化DB
 
 ## 部署
-* 1、 首先需要一个MySQL DB，推荐免费的MySQL服务[planetscale](https://app.planetscale.com/)，然后执行[初始化SQL文件](Initial.sql)。
+* 1、 首先需要一个MySQL DB，推荐免费的MySQL服务[planetscale](https://app.planetscale.com/)，然后执行[初始化SQL文件](Initial.sql)，这个SQL文件里最后一行的<REPLACE-TO-ACCESS-TOKEN>，需要替换为CHATGPT的TOKEN，如何获取请点击[这里](https://github.com/pengzhile/pandora#%E4%BD%93%E9%AA%8C%E5%9C%B0%E5%9D%80)。
+* 默认账号： `admin@kirovopensource.com` 请及时更改密码或删除。
+* 默认密码： `P@ssw0rd!` 请及时更改密码或删除。
 * 2、 找台Linux服务器，安装好`Docker`和`Docker compose`。
 * 3、 找一个目录开始部署。
 * 4、 编辑pandora.admin.json文件
