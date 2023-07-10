@@ -12,7 +12,7 @@
 - [ ] 8、头像正常展示
 
 ## 部署
-* 1、 首先需要一个MySQL DB，推荐免费的MySQL服务[planetscale](https://app.planetscale.com/)，然后执行初始化SQL文件。
+* 1、 首先需要一个MySQL DB，推荐免费的MySQL服务[planetscale](https://app.planetscale.com/)，然后执行[初始化SQL文件](Initial.sql)。
 * 2、 找台Linux服务器，安装好`Docker`和`Docker compose`。
 * 3、 找一个目录开始部署。
 * 4、 编辑pandora.admin.json文件
